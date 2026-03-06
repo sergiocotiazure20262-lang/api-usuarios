@@ -1,16 +1,22 @@
 package br.com.cotiinformatica.api_usuarios.services;
 
+import br.com.cotiinformatica.api_usuarios.dtos.AutenticarUsuarioRequest;
+import br.com.cotiinformatica.api_usuarios.dtos.AutenticarUsuarioResponse;
 import br.com.cotiinformatica.api_usuarios.dtos.CriarUsuarioRequest;
 import br.com.cotiinformatica.api_usuarios.dtos.CriarUsuarioResponse;
 import br.com.cotiinformatica.api_usuarios.entities.Usuario;
 import br.com.cotiinformatica.api_usuarios.enums.Perfil;
 import br.com.cotiinformatica.api_usuarios.repositories.UsuarioRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.regex.Pattern;
 
 @Service
@@ -19,6 +25,34 @@ public class UsuarioService {
     //Injeção de dependência
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    /*
+        Método para realizar o serviço de autenticação do usuário
+     */
+    public AutenticarUsuarioResponse autenticar(AutenticarUsuarioRequest request) {
+
+        //Validar os campos
+        validarSenha(request.senha());
+
+        //Consultar o usuário no banco de dados (repositório)
+        var usuario = usuarioRepository.findByEmailAndSenha(request.email(), criptografar(request.senha()));
+
+        if(usuario == null) { //Nenhum usuário encontrado
+            throw new IllegalArgumentException("Acesso negado. Usuário não encontrado.");
+        }
+
+        return new AutenticarUsuarioResponse(
+                usuario.getId(),
+                usuario.getNome(),
+                usuario.getEmail(),
+                usuario.getPerfil().toString(),
+                LocalDateTime.now(),
+                gerarToken(usuario.getEmail())
+        );
+    }
 
     /*
         Método para realizar o serviço de cadastro do usuário
@@ -111,4 +145,14 @@ public class UsuarioService {
         }
     }
 
+    //Método para gera o TOKEN JWT do usuário
+    private String gerarToken(String usuario) {
+
+        //Gerando o token jwt
+        return Jwts.builder()
+                .setSubject(usuario) //identificação do usuário
+                .setIssuedAt(new Date()) //data de geração do token
+                .signWith(SignatureAlgorithm.HS256, jwtSecret) //Chave para assinatura
+                .compact(); //Gerando o token
+    }
 }

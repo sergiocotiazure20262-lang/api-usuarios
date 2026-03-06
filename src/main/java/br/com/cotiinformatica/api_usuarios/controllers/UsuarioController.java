@@ -1,5 +1,6 @@
 package br.com.cotiinformatica.api_usuarios.controllers;
 
+import br.com.cotiinformatica.api_usuarios.dtos.AutenticarUsuarioRequest;
 import br.com.cotiinformatica.api_usuarios.dtos.CriarUsuarioRequest;
 import br.com.cotiinformatica.api_usuarios.services.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +34,18 @@ public class UsuarioController {
     }
 
     @PostMapping("autenticar")
-    public void autenticar() {
-        //TODO Implementar
+    public ResponseEntity<?> autenticar(@RequestBody AutenticarUsuarioRequest request) {
+
+        try {
+            //Enviando os dados do usuário para a camada de serviços e obter o resultado
+            var response = usuarioService.autenticar(request);
+            //Retornar resposta de sucesso
+            return ResponseEntity.status(200).body(response);
+        }
+        catch(IllegalArgumentException e) {
+            //Retornar a mensagem de erro (HTTP 401 UNAUTHORIZED)
+            return ResponseEntity.status(401).body(e.getMessage());
+        }
     }
 
 }

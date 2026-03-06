@@ -20,6 +20,19 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
         SELECT u FROM Usuario u
         WHERE u.email = :email
     """)
-    Usuario findByEmail(@Param("email") String email);
+    Usuario findByEmail(
+            @Param("email") String email);
 
+    /*
+        Método para consultar 1 usuário no banco de dados
+        através do email e da senha informados.
+     */
+    @Query("""
+        SELECT u FROM Usuario u
+        WHERE u.email = :email
+          AND u.senha = :senha
+    """)
+    Usuario findByEmailAndSenha(
+            @Param("email") String email,
+            @Param("senha") String senha);
 }
