@@ -10,6 +10,14 @@ async function criarUsuario(dto) {
         throw new Error('Nome, email e senha são obrigatórios');
     }
 
+    //Buscando o usuário pelo email para verificar se já existe um usuário com o mesmo email
+    const usuarioExistente = await usuarioRepository.buscarPorEmail(dto.email);
+
+    //Se o usuário já existir, lançamos um erro
+    if (usuarioExistente) {
+        throw new Error('Já existe um usuário com esse email');
+    }
+
     //Criptografando a senha do usuário
     const senhaCriptografada = await bcrypt.hash(dto.senha, 10);
 
